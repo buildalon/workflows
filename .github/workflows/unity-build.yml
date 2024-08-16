@@ -30,33 +30,35 @@ jobs:
           build-target: StandaloneOSX
     steps:
       - uses: actions/checkout@v4
+
       - uses: buildalon/unity-setup@v1
         with:
           build-targets: ${{ matrix.build-target }}
-      - uses: buildalon/unity-setup@v1
-        with:
-          build-targets: ${{ matrix.build-target }}
+
       - uses: buildalon/activate-unity-license@v1
         with:
           license: 'Personal'
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
           # serial: ${{ secrets.UNITY_SERIAL }} # required for Professional license activations
+
       - uses: buildalon/unity-action@v1
         name: Project Validation
         with:
           log-name: 'project-validation'
           args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject'
+
       - uses: buildalon/unity-action@v1
         name: '${{ matrix.build-target }}-Build'
         with:
           log-name: '${{ matrix.build-target }}-Build'
           build-target: '${{ matrix.build-target }}'
           args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild'
+
       - uses: actions/upload-artifact@v4
         id: upload-artifact
-        name: Upload Artifacts
-        if: always()
+        name: 'Upload ${{ matrix.build-target }} Artifacts'
+        if: success() || failure()
         with:
           compression-level: 0
           retention-days: 1
