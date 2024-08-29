@@ -69,3 +69,23 @@ jobs:
             !${{ env.UNITY_PROJECT_PATH || github.workspace }}/Library/**/*
             !/**/*_BackUpThisFolder_ButDontShipItWithYourGame/**
             !/**/*_BurstDebugInformation_DoNotShip/**
+
+      - name: Clean Artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          # Clean Logs
+          Get-ChildItem -Path "${{ env.UNITY_PROJECT_PATH }}" -File -Filter "*.log" -Recurse | Remove-Item -Force
+
+          $artifacts = "${{ env.UNITY_PROJECT_PATH }}/Builds"
+          Write-Host "::debug::Build artifacts path: $artifacts"
+
+          if (Test-Path -Path $artifacts) {
+            try {
+              Remove-Item $artifacts -Recurse -Force
+            } catch {
+              Write-Warning "Failed to delete artifacts folder file: $_"
+            }
+          } else {
+            Write-Host "::debug::Artifacts folder not found."
+          }
