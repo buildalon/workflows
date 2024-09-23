@@ -1,5 +1,5 @@
-# A generalized Unity build workflow that can be used with any Unity project.
-name: Unity Build
+# Builds unity project and creates UWP package for sideloading or store submission
+name: UWP Build
 on:
   push:
     branches:
@@ -16,31 +16,24 @@ on:
         default: false
         type: 'boolean'
 concurrency:
-  # Ensures that only one workflow runs at a time on each branch
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Cancels in progress runs for open pull requests
   cancel-in-progress: ${{ ( github.event_name == 'pull_request' || github.event.action == 'synchronize' ) }}
 jobs:
   build:
     env:
-      UNITY_PROJECT_PATH: '' # set by the unity-setup action
+      UNITY_PROJECT_PATH: '' # set by unity-setup action
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [buildalon-ubuntu, buildalon-windows, buildalon-macos]
-        include:
-        - os: buildalon-ubuntu
-          build-target: StandaloneLinux64
-        - os: buildalon-windows
-          build-target: StandaloneWindows64
-        - os: buildalon-macos
-          build-target: StandaloneOSX
+        os: [buildalon-windows]
+        build-target: [WSAPlayer]
     steps:
       - uses: actions/checkout@v4
         with:
           clean: ${{ github.event.inputs.clean == 'true' }}
       - uses: buildalon/unity-setup@v1
         with:
+          version-file: ${{ github.workspace }}/ProjectSettings/ProjectVersion.txt
           build-targets: ${{ matrix.build-target }}
       - uses: buildalon/activate-unity-license@v1
         with:
@@ -50,30 +43,39 @@ jobs:
           # required for Professional license activations
           # serial: ${{ secrets.UNITY_SERIAL }}
       - uses: buildalon/unity-action@v1
-        name: Project Validation
+        name: '${{ matrix.build-target }}-Validate'
         with:
-          log-name: 'project-validation'
-          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject'
+          build-target: ${{ matrix.build-target }}
+          log-name: '${{ matrix.build-target }}-Validate'
+          args: '-quit -nographics -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject -importTMProEssentialsAsset'
       - uses: buildalon/unity-action@v1
         name: '${{ matrix.build-target }}-Build'
         with:
+          build-target: ${{ matrix.build-target }}
           log-name: '${{ matrix.build-target }}-Build'
-          build-target: '${{ matrix.build-target }}'
-          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild'
-      - uses: actions/upload-artifact@v4
-        id: upload-artifact
-        name: 'Upload ${{ matrix.build-target }} Artifacts'
-        if: success() || failure()
+          args: '-quit -nographics -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild -sceneList Assets/Scenes/SampleScene.unity -arch ARM64'
+      - uses: actions/setup-dotnet@v4
         with:
-          compression-level: 0
+          dotnet-version: '8.x'
+      - uses: microsoft/setup-msbuild@v2
+      - uses: buildalon/unity-uwp-builder@v1
+        id: uwp-build
+        with:
+          project-path: ${{ env.UNITY_PROJECT_PATH }}/Builds/WSAPlayer
+          package-type: 'sideload'
+      - name: print outputs
+        shell: bash
+        run: |
+          echo "Executable: ${{ steps.uwp-build.outputs.executable }}"
+          echo "Output Directory: ${{ steps.uwp-build.outputs.output-directory }}"
+          ls -R "${{ steps.uwp-build.outputs.output-directory }}"
+      - uses: actions/upload-artifact@v4
+        with:
           retention-days: 1
-          name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
+          name: ${{ matrix.os }}-${{ matrix.build-target }}.${{ github.run_number }}.${{ github.run_attempt }}
           path: |
             ${{ github.workspace }}/**/*.log
-            ${{ env.UNITY_PROJECT_PATH || github.workspace }}/Builds/${{ matrix.build-target }}/**/*
-            !${{ env.UNITY_PROJECT_PATH || github.workspace }}/Library/**/*
-            !/**/*_BackUpThisFolder_ButDontShipItWithYourGame/**
-            !/**/*_BurstDebugInformation_DoNotShip/**
+            ${{ steps.uwp-build.outputs.output-directory }}
       - name: Clean Artifacts
         if: always()
         shell: pwsh
