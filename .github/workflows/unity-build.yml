@@ -27,13 +27,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+        os: [buildalon-ubuntu, buildalon-windows, buildalon-macos]
         include:
-        - os: ubuntu-latest
+        - os: buildalon-ubuntu
           build-target: StandaloneLinux64
-        - os: windows-latest
+        - os: buildalon-windows
           build-target: StandaloneWindows64
-        - os: macos-13
+        - os: buildalon-macos
           build-target: StandaloneOSX
     steps:
       - uses: actions/checkout@v4
