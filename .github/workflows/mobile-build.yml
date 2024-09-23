@@ -58,7 +58,6 @@ jobs:
           log-name: '${{ matrix.build-target }}-Build'
           build-target: '${{ matrix.build-target }}'
           args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}'
-      # if macos-13 then use unity-xcode-builder post step to build Xcode project
       - uses: buildalon/unity-xcode-builder@v1
         if: matrix.os == 'macos-13'
         with:
