@@ -25,7 +25,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # only Android on Windows and iOS on macOS
         os: [windows-latest, macos-13]
         include:
           - os: windows-latest
