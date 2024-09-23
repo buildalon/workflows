@@ -59,7 +59,7 @@ jobs:
           build-target: '${{ matrix.build-target }}'
           args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}'
       - uses: buildalon/unity-xcode-builder@v1
-        if: matrix.os == 'buildalon-macos' && success()
+        if: matrix.build-target == 'iOS'
         with:
           project-path: ${{ env.UNITY_PROJECT_PATH }}
           app-store-connect-key: ${{ secrets.APP_STORE_CONNECT_KEY }}
