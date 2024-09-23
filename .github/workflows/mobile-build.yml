@@ -1,0 +1,103 @@
+# Builds unity project and creates
+name: Mobile Build
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - '*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      clean:
+        description: 'Clean the project before building'
+        required: false
+        default: false
+        type: 'boolean'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ ( github.event_name == 'pull_request' || github.event.action == 'synchronize' ) }}
+jobs:
+  build:
+    env:
+      UNITY_PROJECT_PATH: '' # set by unity-setup action
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # only Android on Windows and iOS on macOS
+        os: [windows-latest, macos-13]
+        include:
+          - os: windows-latest
+            build-target: Android
+            build-args: ''
+          - os: macos-13
+            build-target: iOS
+            build-args: ' -enableAppleAutomaticSigning'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: ${{ github.event.inputs.clean == 'true' }}
+      - uses: buildalon/unity-setup@v1
+        with:
+          build-targets: ${{ matrix.build-target }}
+      - uses: buildalon/activate-unity-license@v1
+        with:
+          license: 'Personal'
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          # required for Professional license activations
+          # serial: ${{ secrets.UNITY_SERIAL }}
+      - uses: buildalon/unity-action@v1
+        name: Project Validation
+        with:
+          log-name: 'project-validation'
+          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject'
+      - uses: buildalon/unity-action@v1
+        name: '${{ matrix.build-target }}-Build'
+        with:
+          log-name: '${{ matrix.build-target }}-Build'
+          build-target: '${{ matrix.build-target }}'
+          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}'
+      # if macos-13 then use unity-xcode-builder post step to build Xcode project
+      - uses: buildalon/unity-xcode-builder@v1
+        if: matrix.os == 'macos-13'
+        with:
+          project-path: ${{ env.UNITY_PROJECT_PATH }}
+          app-store-connect-key: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          app-store-connect-key-id: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          team-id: ${{ secrets.APPLE_TEAM_ID }}
+      - uses: actions/upload-artifact@v4
+        id: upload-artifact
+        name: 'Upload ${{ matrix.build-target }} Artifacts'
+        if: success() || failure()
+        with:
+          compression-level: 0
+          retention-days: 1
+          name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
+          path: |
+            ${{ github.workspace }}/**/*.log
+            ${{ github.workspace }}/**/*.ipa
+            ${{ github.workspace }}/**/*.apk
+            ${{ github.workspace }}/**/*.aab
+            ${{ github.workspace }}/**/*.obb
+      - name: Clean Artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          # Clean Logs
+          Get-ChildItem -Path "${{ env.UNITY_PROJECT_PATH }}" -File -Filter "*.log" -Recurse | Remove-Item -Force
+
+          $artifacts = "${{ env.UNITY_PROJECT_PATH }}/Builds"
+          Write-Host "::debug::Build artifacts path: $artifacts"
+
+          if (Test-Path -Path $artifacts) {
+            try {
+              Remove-Item $artifacts -Recurse -Force
+            } catch {
+              Write-Warning "Failed to delete artifacts folder file: $_"
+            }
+          } else {
+            Write-Host "::debug::Artifacts folder not found."
+          }
