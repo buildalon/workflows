@@ -1,4 +1,4 @@
-# Builds unity project and creates
+# Builds unity project and creates iOS and Android executables for sideloading.
 name: Mobile Build
 on:
   push:
