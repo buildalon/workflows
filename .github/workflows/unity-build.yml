@@ -1,5 +1,5 @@
 # A generalized Unity build workflow that can be used with any Unity project.
-name: Unity Build
+name: Buildalon Unity Build
 on:
   push:
     branches:

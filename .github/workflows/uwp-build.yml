@@ -1,5 +1,5 @@
 # Builds unity project and creates UWP package for sideloading or store submission
-name: UWP Build
+name: Buildalon UWP Build
 on:
   push:
     branches:
