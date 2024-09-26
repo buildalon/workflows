@@ -29,10 +29,13 @@ jobs:
         include:
           - os: buildalon-ubuntu
             build-target: StandaloneLinux64
+            build-args: ''
           - os: buildalon-windows
             build-target: StandaloneWindows64
+            build-args: ''
           - os: buildalon-macos
             build-target: StandaloneOSX
+            build-args: ''
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,7 +60,7 @@ jobs:
         with:
           log-name: '${{ matrix.build-target }}-Build'
           build-target: '${{ matrix.build-target }}'
-          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild'
+          args: '-quit -batchmode -executeMethod Utilities.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}'
       - uses: actions/upload-artifact@v4
         id: upload-artifact
         name: 'Upload ${{ matrix.build-target }} Artifacts'
