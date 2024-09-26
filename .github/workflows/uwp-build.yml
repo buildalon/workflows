@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       clean:
-        description: 'Clean the project before building'
+        description: 'Cleans the library folder and deletes cached items'
         required: false
         default: false
         type: 'boolean'
@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build:
     env:
-      UNITY_PROJECT_PATH: '' # set by unity-setup action
+      UNITY_PROJECT_PATH: ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

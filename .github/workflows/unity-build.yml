@@ -11,30 +11,28 @@ on:
   workflow_dispatch:
     inputs:
       clean:
-        description: 'Clean the project before building'
+        description: 'Cleans the library folder and deletes cached items'
         required: false
         default: false
         type: 'boolean'
 concurrency:
-  # Ensures that only one workflow runs at a time on each branch
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Cancels in progress runs for open pull requests
   cancel-in-progress: ${{ ( github.event_name == 'pull_request' || github.event.action == 'synchronize' ) }}
 jobs:
   build:
     env:
-      UNITY_PROJECT_PATH: '' # set by the unity-setup action
+      UNITY_PROJECT_PATH: ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [buildalon-ubuntu, buildalon-windows, buildalon-macos]
         include:
-        - os: buildalon-ubuntu
-          build-target: StandaloneLinux64
-        - os: buildalon-windows
-          build-target: StandaloneWindows64
-        - os: buildalon-macos
-          build-target: StandaloneOSX
+          - os: buildalon-ubuntu
+            build-target: StandaloneLinux64
+          - os: buildalon-windows
+            build-target: StandaloneWindows64
+          - os: buildalon-macos
+            build-target: StandaloneOSX
     steps:
       - uses: actions/checkout@v4
         with:
