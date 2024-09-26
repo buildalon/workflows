@@ -69,6 +69,7 @@ jobs:
           retention-days: 1
           name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
           path: |
+            ${{ github.workspace }}/**/*.xml
             ${{ github.workspace }}/**/*.log
             ${{ env.UNITY_PROJECT_PATH || github.workspace }}/Builds/${{ matrix.build-target }}/**/*
             !${{ env.UNITY_PROJECT_PATH || github.workspace }}/Library/**/*

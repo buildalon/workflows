@@ -70,10 +70,12 @@ jobs:
           echo "Output Directory: ${{ steps.uwp-build.outputs.output-directory }}"
           ls -R "${{ steps.uwp-build.outputs.output-directory }}"
       - uses: actions/upload-artifact@v4
+        id: upload-artifact
         with:
           retention-days: 1
-          name: ${{ matrix.os }}-${{ matrix.build-target }}.${{ github.run_number }}.${{ github.run_attempt }}
+          name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
           path: |
+            ${{ github.workspace }}/**/*.xml
             ${{ github.workspace }}/**/*.log
             ${{ steps.uwp-build.outputs.output-directory }}
       - name: Clean Artifacts
