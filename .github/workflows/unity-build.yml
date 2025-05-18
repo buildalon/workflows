@@ -35,7 +35,7 @@ jobs:
             build-args: ''
           - os: buildalon-macos
             build-target: StandaloneOSX
-            build-args: ''
+            build-args: ' -export'
     steps:
       - uses: actions/checkout@v4
         with:
