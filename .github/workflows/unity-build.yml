@@ -5,8 +5,9 @@ on:
     branches:
       - 'main'
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     branches:
-      - '*'
+      - '**'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -17,15 +18,18 @@ on:
         type: 'boolean'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ ( github.event_name == 'pull_request' || github.event.action == 'synchronize' ) }}
+  cancel-in-progress: ${{(github.event_name == 'pull_request' || github.event.action == 'synchronize')}}
 jobs:
   build:
+    name: (${{ matrix.os }}) ${{ matrix.build-target }}
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
     env:
       UNITY_PROJECT_PATH: ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [buildalon-ubuntu, buildalon-windows, buildalon-macos]
         include:
           - os: buildalon-ubuntu
             build-target: StandaloneLinux64
@@ -71,28 +75,47 @@ jobs:
           retention-days: 1
           name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
           path: |
-            ${{ github.workspace }}/**/*.xml
             ${{ github.workspace }}/**/*.log
-            ${{ env.UNITY_PROJECT_PATH || github.workspace }}/Builds/${{ matrix.build-target }}/**/*
-            !${{ env.UNITY_PROJECT_PATH || github.workspace }}/Library/**/*
+            ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}/**/*
+            !${{ env.UNITY_PROJECT_PATH }}/Library/**/*
             !/**/*_BackUpThisFolder_ButDontShipItWithYourGame/**
             !/**/*_BurstDebugInformation_DoNotShip/**
       - name: Clean Artifacts
         if: always()
-        shell: pwsh
+        shell: bash
+        continue-on-error: true
         run: |
-          # Clean Logs
-          Get-ChildItem -Path "${{ env.UNITY_PROJECT_PATH }}" -File -Filter "*.log" -Recurse | Remove-Item -Force
+          set -xe
+          echo "Cleaning logs..."
+          logs=$(find "${{ github.workspace }}" -type f -name "*.log")
+          echo "Found $(echo "$logs" | grep -v '^[[:space:]]*$' | wc -l) log files."
+          for log in $logs; do
+            if [ ! -s "$log" ]; then
+              continue
+            fi
+            echo "$log"
+            rm -f "$log" || echo "::warning::Failed to delete log file: $log"
+          done
 
-          $artifacts = "${{ env.UNITY_PROJECT_PATH }}/Builds"
-          Write-Host "::debug::Build artifacts path: $artifacts"
+          clean='${{ github.event.inputs.clean }}'
+          if [ "$clean" == 'true' ]; then
+            echo "Cleaning build artifacts..."
+            artifacts="${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}"
+            echo "Build artifacts path $artifacts"
+            if [ -d "$artifacts" ]; then
+              items=$(find "$artifacts" -type f)
+              echo "Found artifacts folder with $(echo "$items" | grep -v '^[[:space:]]*$' | wc -l) items."
+              for item in $items; do
+                if [ ! -s "$item" ]; then
+                  continue
+                fi
+                echo "$item"
+                rm -rf "$item" || echo "::warning::Failed to delete artifacts folder file: $item"
+              done
+            else
+              echo "Artifacts folder not found."
+            fi
+            rm -rf "${artifacts}" || echo "::warning::Failed to delete artifacts folder: $artifacts"
+          fi
 
-          if (Test-Path -Path $artifacts) {
-            try {
-              Remove-Item $artifacts -Recurse -Force
-            } catch {
-              Write-Warning "Failed to delete artifacts folder file: $_"
-            }
-          } else {
-            Write-Host "::debug::Artifacts folder not found."
-          }
+          find "${{ env.UNITY_PROJECT_PATH }}" -type d -empty -delete || echo "::warning::Failed to delete some empty directories"
