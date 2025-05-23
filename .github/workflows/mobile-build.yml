@@ -61,11 +61,12 @@ jobs:
       - uses: buildalon/unity-xcode-builder@v1
         if: matrix.build-target == 'iOS'
         with:
+          export-option: 'debugging'
           project-path: ${{ env.UNITY_PROJECT_PATH }}
+          team-id: ${{ secrets.APPLE_TEAM_ID }}
           app-store-connect-key: ${{ secrets.APP_STORE_CONNECT_KEY }}
           app-store-connect-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          team-id: ${{ secrets.APPLE_TEAM_ID }}
       - uses: actions/upload-artifact@v4
         id: upload-artifact
         name: 'Upload ${{ matrix.build-target }} Artifacts'
