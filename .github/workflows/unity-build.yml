@@ -54,13 +54,13 @@ jobs:
           password: ${{ secrets.UNITY_PASSWORD }}
           # required for Professional license activations
           # serial: ${{ secrets.UNITY_SERIAL }}
-      - uses: buildalon/unity-action@v1
+      - uses: buildalon/unity-action@v2
         name: Project Validation
         with:
           log-name: 'project-validation'
           build-target: '${{ matrix.build-target }}'
           args: '-quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject'
-      - uses: buildalon/unity-action@v1
+      - uses: buildalon/unity-action@v2
         name: '${{ matrix.build-target }}-Build'
         with:
           log-name: '${{ matrix.build-target }}-Build'
