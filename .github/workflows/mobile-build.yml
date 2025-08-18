@@ -38,7 +38,7 @@ jobs:
             build-target: iOS
             build-args: ' -enableAppleAutomaticSigning'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           clean: ${{ github.event.inputs.clean == 'true' }}
       - uses: buildalon/unity-setup@v1
