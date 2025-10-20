@@ -2,12 +2,10 @@
 name: Buildalon Unity Build
 on:
   push:
-    branches:
-      - 'main'
+    branches: [main]
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-    branches:
-      - '**'
+    branches: ['**']
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -44,12 +42,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           clean: ${{ github.event.inputs.clean == 'true' }}
-      - uses: buildalon/unity-setup@v1
+      - uses: buildalon/unity-setup@v2
         with:
           build-targets: ${{ matrix.build-target }}
-      - uses: buildalon/activate-unity-license@v1
+      - uses: buildalon/activate-unity-license@v2
         with:
-          license: 'Personal'
+          license: personal
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
           # required for Professional license activations
@@ -57,23 +55,23 @@ jobs:
       - uses: buildalon/unity-action@v2
         name: Project Validation
         with:
-          log-name: 'project-validation'
-          build-target: '${{ matrix.build-target }}'
-          args: '-quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject'
+          log-name: project-validation
+          build-target: ${{ matrix.build-target }}
+          args: -quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject
       - uses: buildalon/unity-action@v2
-        name: '${{ matrix.build-target }}-Build'
+        name: ${{ matrix.build-target }}-Build
         with:
-          log-name: '${{ matrix.build-target }}-Build'
-          build-target: '${{ matrix.build-target }}'
-          args: '-quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}'
+          log-name: ${{ matrix.build-target }}-Build
+          build-target: ${{ matrix.build-target }}
+          args: -quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}
       - uses: actions/upload-artifact@v4
         id: upload-artifact
-        name: 'Upload ${{ matrix.build-target }} Artifacts'
+        name: Upload ${{ matrix.build-target }} Artifacts
         if: success() || failure()
         with:
           compression-level: 0
           retention-days: 1
-          name: '${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts'
+          name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts
           path: |
             ${{ github.workspace }}/**/*.log
             ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}/**/*
