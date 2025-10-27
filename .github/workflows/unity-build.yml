@@ -64,7 +64,7 @@ jobs:
           log-name: ${{ matrix.build-target }}-Build
           build-target: ${{ matrix.build-target }}
           args: -quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild${{ matrix.build-args }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         id: upload-artifact
         name: Upload ${{ matrix.build-target }} Artifacts
         if: success() || failure()
