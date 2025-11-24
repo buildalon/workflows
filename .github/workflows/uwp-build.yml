@@ -33,7 +33,7 @@ jobs:
             build-target: WSAPlayer
             build-args: ''
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           clean: ${{ github.event.inputs.clean == 'true' }}
       - uses: buildalon/unity-setup@v2
