@@ -72,7 +72,7 @@ jobs:
           echo "Executable: ${{ steps.uwp-build.outputs.executable }}"
           echo "Output Directory: ${{ steps.uwp-build.outputs.output-directory }}"
           ls -R "${{ steps.uwp-build.outputs.output-directory }}"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         id: upload-artifact
         with:
           retention-days: 1

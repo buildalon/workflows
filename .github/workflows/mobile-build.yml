@@ -69,7 +69,7 @@ jobs:
           app-store-connect-key: ${{ secrets.APP_STORE_CONNECT_KEY }}
           app-store-connect-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         id: upload-artifact
         name: Upload ${{ matrix.build-target }} Artifacts
         if: success() || failure()
