@@ -59,7 +59,7 @@ jobs:
           build-target: ${{ matrix.build-target }}
           log-name: ${{ matrix.build-target }}-Build
           args: -quit -nographics -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild -arch ARM64
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
       - uses: microsoft/setup-msbuild@v3
       - uses: buildalon/unity-uwp-builder@v1
         id: uwp-build
