@@ -60,17 +60,15 @@ jobs:
         env:
           BUILD_OUTPUT_PATH: ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}
         run: |
-          $projectPath = [System.IO.Path]::GetFullPath($env:UNITY_PROJECT_PATH).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-          $projectRoot = "$projectPath$([System.IO.Path]::DirectorySeparatorChar)"
+          $projectPath = [System.IO.Path]::GetFullPath($env:UNITY_PROJECT_PATH)
           $outputPath = [System.IO.Path]::GetFullPath($env:BUILD_OUTPUT_PATH)
+          $relativePath = [System.IO.Path]::GetRelativePath($projectPath, $outputPath)
 
-          if (!$outputPath.StartsWith($projectRoot, [System.StringComparison]::OrdinalIgnoreCase))
-          {
+          if ($relativePath -eq '.' -or $relativePath.StartsWith('..') -or [System.IO.Path]::IsPathRooted($relativePath)) {
             throw "Refusing to clean build output outside project path: $outputPath"
           }
 
-          if (Test-Path -LiteralPath $outputPath)
-          {
+          if (Test-Path -LiteralPath $outputPath) {
             Remove-Item -LiteralPath $outputPath -Recurse -Force
           }
 
