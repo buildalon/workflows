@@ -20,13 +20,14 @@ concurrency:
 jobs:
   build:
     name: (${{ matrix.os }}) ${{ matrix.build-target }}
-    if: github.event.pull_request.draft == false
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     permissions:
       contents: read
     env:
       UNITY_PROJECT_PATH: ''
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: buildalon-windows
@@ -35,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          clean: ${{ github.event.inputs.clean == 'true' }}
+          clean: ${{ inputs.clean }}
       - uses: buildalon/unity-setup@v2
         with:
           version-file: ${{ github.workspace }}/ProjectSettings/ProjectVersion.txt
@@ -53,6 +54,24 @@ jobs:
           build-target: ${{ matrix.build-target }}
           log-name: ${{ matrix.build-target }}-Validate
           args: -quit -nographics -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject
+      - name: Clean ${{ matrix.build-target }} Build Output
+        shell: pwsh
+        env:
+          BUILD_OUTPUT_PATH: ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}
+        run: |
+          $projectPath = [System.IO.Path]::GetFullPath($env:UNITY_PROJECT_PATH)
+          $outputPath = [System.IO.Path]::GetFullPath($env:BUILD_OUTPUT_PATH)
+          $relativePath = [System.IO.Path]::GetRelativePath($projectPath, $outputPath)
+
+          if ($relativePath -eq '.' -or $relativePath.StartsWith('..') -or [System.IO.Path]::IsPathRooted($relativePath)) {
+            throw "Refusing to clean build output outside project path: $outputPath"
+          }
+
+          if (Test-Path -LiteralPath $outputPath) {
+            Remove-Item -LiteralPath $outputPath -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
       - uses: buildalon/unity-action@v3
         name: ${{ matrix.build-target }}-Build
         with:
@@ -74,12 +93,26 @@ jobs:
           ls -R "${{ steps.uwp-build.outputs.output-directory }}"
       - uses: actions/upload-artifact@v7
         id: upload-artifact
+        name: Upload ${{ matrix.build-target }} Build
+        if: success()
+        with:
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+          name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Build
+          path: ${{ steps.uwp-build.outputs.output-directory }}
+      - uses: actions/upload-artifact@v7
+        id: upload-logs
+        name: Upload ${{ matrix.build-target }} Logs
+        if: always()
+        continue-on-error: true
         with:
           retention-days: 1
-          name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Artifacts
+          if-no-files-found: ignore
+          name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Logs
           path: |
             ${{ github.workspace }}/**/*.log
-            ${{ steps.uwp-build.outputs.output-directory }}
+            ${{ github.workspace }}/**/*.xml
       - name: Clean Artifacts
         if: always()
         shell: bash
@@ -97,7 +130,7 @@ jobs:
             rm -f "$log" || echo "::warning::Failed to delete log file: $log"
           done
 
-          clean='${{ github.event.inputs.clean }}'
+          clean='${{ inputs.clean }}'
           if [ "$clean" == 'true' ]; then
             echo "Cleaning build artifacts..."
             artifacts="${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}"
