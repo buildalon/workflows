@@ -54,6 +54,7 @@ jobs:
         name: Project Validation
         with:
           log-name: project-validation
+          build-target: ${{ matrix.build-target }}
           args: -quit -batchmode -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.ValidateProject
       - name: Clean ${{ matrix.build-target }} Build Output
         shell: pwsh
@@ -83,7 +84,7 @@ jobs:
         if: matrix.build-target == 'iOS'
         with:
           export-option: debugging
-          project-path: ${{ env.UNITY_PROJECT_PATH }}
+          project-path: ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}/**/*.xcodeproj
           team-id: ${{ secrets.APPLE_TEAM_ID }}
           app-store-connect-key: ${{ secrets.APP_STORE_CONNECT_KEY }}
           app-store-connect-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -95,6 +96,7 @@ jobs:
         with:
           compression-level: 0
           retention-days: 1
+          if-no-files-found: error
           name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Build
           path: |
             ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}/**/*.ipa

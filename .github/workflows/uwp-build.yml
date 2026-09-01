@@ -96,7 +96,9 @@ jobs:
         name: Upload ${{ matrix.build-target }} Build
         if: success()
         with:
+          compression-level: 0
           retention-days: 1
+          if-no-files-found: error
           name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Build
           path: ${{ steps.uwp-build.outputs.output-directory }}
       - uses: actions/upload-artifact@v7

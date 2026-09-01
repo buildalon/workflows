@@ -90,6 +90,7 @@ jobs:
         with:
           compression-level: 0
           retention-days: 1
+          if-no-files-found: error
           name: ${{ github.run_number }}.${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.build-target }}-Build
           path: |
             ${{ env.UNITY_PROJECT_PATH }}/Builds/${{ matrix.build-target }}/**/*
