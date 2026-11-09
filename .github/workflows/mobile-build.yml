@@ -50,7 +50,7 @@ jobs:
           password: ${{ secrets.UNITY_PASSWORD }}
           # required for Professional license activations
           # serial: ${{ secrets.UNITY_SERIAL }}
-      - uses: buildalon/unity-action@v3
+      - uses: buildalon/unity-action@v4
         name: Project Validation
         with:
           log-name: project-validation
@@ -74,7 +74,7 @@ jobs:
           }
 
           New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
-      - uses: buildalon/unity-action@v3
+      - uses: buildalon/unity-action@v4
         name: ${{ matrix.build-target }}-Build
         with:
           log-name: ${{ matrix.build-target }}-Build
