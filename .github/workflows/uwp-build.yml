@@ -41,7 +41,7 @@ jobs:
         with:
           version-file: ${{ github.workspace }}/ProjectSettings/ProjectVersion.txt
           build-targets: ${{ matrix.build-target }}
-      - uses: buildalon/activate-unity-license@v2
+      - uses: buildalon/activate-unity-license@v3
         with:
           license: personal
           username: ${{ secrets.UNITY_USERNAME }}
