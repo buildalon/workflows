@@ -43,7 +43,7 @@ jobs:
       - uses: buildalon/unity-setup@v2
         with:
           build-targets: ${{ matrix.build-target }}
-      - uses: buildalon/activate-unity-license@v2
+      - uses: buildalon/activate-unity-license@v3
         with:
           license: personal
           username: ${{ secrets.UNITY_USERNAME }}
