@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           clean: ${{ inputs.clean }}
-      - uses: buildalon/unity-setup@v2
+      - uses: buildalon/unity-setup@v3
         with:
           build-targets: ${{ matrix.build-target }}
       - uses: buildalon/activate-unity-license@v3
